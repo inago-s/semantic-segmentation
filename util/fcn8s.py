@@ -7,8 +7,10 @@ class fcn8s:
         self.n_class = n_class
 
     def create_model(self):
-        # conv1
+        # input
         input = tf.keras.layers.Input(shape=(None, None, 3))
+
+        # conv1
         x = Conv_Block(64, (3, 3), padding='same')(input)
         x = Conv_Block(64, (3, 3), padding='same')(x)
 
@@ -56,29 +58,29 @@ class fcn8s:
         # score_conv7
         x = Conv_Block(self.n_class, (1, 1))(x)
         # 2x_conv7
-        up2_conv7 = tf.keras.layers.Conv2DTranspose(
+        x = tf.keras.layers.Conv2DTranspose(
             filters=self.n_class, kernel_size=(4, 4),
             strides=(2, 2), padding='same')(x)
 
         # score_pool4
         pool4_score = Conv_Block(self.n_class, (1, 1))(pool4)
         # Score_pool4 + 2x_conv7
-        fuse_pool4 = tf.keras.layers.Add()([up2_conv7, pool4_score])
+        x = tf.keras.layers.Add()([x, pool4_score])
         # 2x_fuse_pool4
-        up2_pool4 = tf.keras.layers.Conv2DTranspose(
+        x = tf.keras.layers.Conv2DTranspose(
             filters=self.n_class, kernel_size=(4, 4),
-            strides=(2, 2), padding='same')(fuse_pool4)
+            strides=(2, 2), padding='same')(x)
 
         # score_pool3
         pool3_score = Conv_Block(self.n_class, (1, 1))(pool3)
         # Score_pool3 + 2x_fuse_pool4
-        fuse_pool3 = tf.keras.layers.Add()([up2_pool4, pool3_score])
+        x = tf.keras.layers.Add()([x, pool3_score])
         # 8x_fuse_pool3
-        up8_pool3 = tf.keras.layers.Conv2DTranspose(
+        x = tf.keras.layers.Conv2DTranspose(
             filters=self.n_class, kernel_size=(16, 16),
-            strides=(8, 8), padding='same')(fuse_pool3)
+            strides=(8, 8), padding='same')(x)
 
-        output = tf.keras.layers.Softmax()(up8_pool3)
+        output = tf.keras.layers.Softmax()(x)
 
         model = tf.keras.Model(input, output)
 
